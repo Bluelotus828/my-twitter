@@ -11,7 +11,7 @@ from accounts.api.serializers import (
 from django.contrib.auth import (
     logout as django_logout,
     login as django_login,
-    authenticate as django_authenticate
+    authenticate as django_authenticate,
 )
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -94,3 +94,11 @@ class AccountViewSet(viewsets.ViewSet):
             "success": True,
             "user": UserSerializer(user).data
         }, status=201)
+
+    @action(methods=['POST'], detail=False)
+    def logout(self, request):
+        """
+        登出当前用户
+        """
+        django_logout(request)
+        return Response({"success": True})
