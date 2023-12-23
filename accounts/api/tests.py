@@ -14,13 +14,13 @@ class AccountApiTests(TestCase):
     def setUp(self):
         # 这个函数会在每个 test function 执行的时候被执行
         self.client = APIClient()
-        self.user = self.createUser(
+        self.user = self.create_user(
             username='admin',
             email='admin@jiuzhang.com',
             password='correct password',
         )
 
-    def createUser(self, username, email, password):
+    def create_user(self, username, email, password):
         # 不能写成 User.objects.create()
         # 因为 password 需要被加密, username 和 email 需要进行一些 normalize 处理
         return User.objects.create_user(username, email, password)
