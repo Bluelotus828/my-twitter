@@ -16,6 +16,10 @@ class Tweet(models.Model):
     # parameter automatically give timestamp once created
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        index_together = (('user', 'created_at'),)
+        ordering = ('user', '-created_at')
+
     @property
     def hours_to_now(self):
         # created_at has time zone information, datetime.now does not
