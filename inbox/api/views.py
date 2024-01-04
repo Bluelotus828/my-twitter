@@ -47,7 +47,6 @@ class NotificationViewSet(
         mark as read 可以公用一套逻辑。
         """
         serializer = NotificationSerializerForUpdate(
-            # for update serializer, instance has to be passed as para
             instance=self.get_object(),
             data=request.data,
         )
