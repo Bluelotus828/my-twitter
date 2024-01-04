@@ -68,4 +68,7 @@ class SignupSerializer(serializers.ModelSerializer):
             email=email,
             password=password,
         )
+        # create userprofile object
+        # because profile is an instance level property, not a function, so no () afterward
+        user.profile
         return user
