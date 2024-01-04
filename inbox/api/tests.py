@@ -134,6 +134,7 @@ class NotificationApiTests(TestCase):
         response = self.anonymous_client.put(url, {'unread': False})
         self.assertEqual(response.status_code, 403)
         # 因为 queryset 是按照当前登陆用户来，所以会返回 404 而不是 403
+        # queryset is based on the current user, thus 404 not found, not 403
         response = self.dongxie_client.put(url, {'unread': False})
         self.assertEqual(response.status_code, 404)
         # 成功标记为已读
