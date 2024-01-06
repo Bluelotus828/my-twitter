@@ -176,6 +176,6 @@ AWS_S3_REGION_NAME = 'us-west-1'
 MEDIA_ROOT = 'media/'
 
 try:
-    from .local_setttings import *
+    from .local_settings import *
 except:
     pass
