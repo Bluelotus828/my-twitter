@@ -1,37 +1,42 @@
-from django.contrib.auth.models import User, Group
-from rest_framework import serializers
-from rest_framework import exceptions
+from accounts.models import UserProfile
+from django.contrib.auth.models import User
+from rest_framework import serializers, exceptions
 
 
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'email')
-
-
-class UserSerializerForTweet(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username')
 
 
-class UserSerializerForFriendship(UserSerializerForTweet):
+class UserSerializerWithProfile(UserSerializer):
+    nickname = serializers.CharField(source='profile.nickname')
+    avatar_url = serializers.SerializerMethodField()
+
+    def get_avatar_url(self, obj):
+        if obj.profile.avatar:
+            return obj.profile.avatar.url
+        return None
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'nickname', 'avatar_url')
+
+
+class UserSerializerForTweet(UserSerializerWithProfile):
     pass
 
 
-class UserSerializerForComment(UserSerializerForTweet):
+class UserSerializerForComment(UserSerializerWithProfile):
     pass
 
-class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
-    password = serializers.CharField()
 
-    def validate(self, data):
-        if not User.objects.filter(username=data['username'].lower()).exists():
-            raise exceptions.ValidationError({
-                'username': 'User does not exist.'
-            })
-        return data
+class UserSerializerForFriendship(UserSerializerWithProfile):
+    pass
+
+
+class UserSerializerForLike(UserSerializerWithProfile):
+    pass
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -43,7 +48,6 @@ class SignupSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email', 'password')
 
-    # w will be called if is_validate is called
     def validate(self, data):
         # TODO<HOMEWORK> 增加验证 username 是不是只由给定的字符集合构成
         if User.objects.filter(username=data['username'].lower()).exists():
@@ -57,10 +61,8 @@ class SignupSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        # for better performance, store as all lowercase because the validate only match exact same data
         username = validated_data['username'].lower()
         email = validated_data['email'].lower()
-        # username and email can be case-insensitive, but password has to be case-sensitive, so to store the exact
         password = validated_data['password']
 
         user = User.objects.create_user(
@@ -68,7 +70,15 @@ class SignupSerializer(serializers.ModelSerializer):
             email=email,
             password=password,
         )
-        # create userprofile object
-        # because profile is an instance level property, not a function, so no () afterward
-        user.profile
         return user
+
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
+
+class UserProfileSerializerForUpdate(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ('nickname', 'avatar')

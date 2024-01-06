@@ -18,12 +18,15 @@ class TestCase(DjangoTestCase):
         self._anonymous_client = APIClient()
         return self._anonymous_client
 
-    def create_user(self, username, password=None):
+    def create_user(self, username, email=None, password=None):
+        if email is None:
+            email = '{}@jiuzhang.com'.format(username)
         if password is None:
             password = 'generic password'
         # 不能写成 User.objects.create()
         # 因为 password 需要被加密, username 和 email 需要进行一些 normalize 处理
-        return User.objects.create_user(username, password)
+        return User.objects.create_user(username, email, password)
+
 
     def create_tweet(self, user, content=None):
         if content is None:
