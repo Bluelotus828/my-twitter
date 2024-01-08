@@ -133,5 +133,5 @@ class UserProfileViewSet(
     viewsets.mixins.UpdateModelMixin,
 ):
     queryset = UserProfile
-    permission_classes = (IsObjectOwner,)
+    permission_classes = (permissions.IsAuthenticated, IsObjectOwner)
     serializer_class = UserProfileSerializerForUpdate
