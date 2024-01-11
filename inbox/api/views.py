@@ -29,7 +29,7 @@ class NotificationViewSet(
 
     @action(methods=['POST'], detail=False, url_path='mark-all-as-read')
     def mark_all_as_read(self, request, *args, **kwargs):
-        updated_count = self.get_queryset().update(unread=False)
+        updated_count = self.get_queryset().filter(unread=True).update(unread=False)
         return Response({'marked_count': updated_count}, status=status.HTTP_200_OK)
 
     @required_params(method='POST', params=['unread'])
