@@ -9,7 +9,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from utils.paginations import FriendshipPagination
+from friendships.api.paginations import FriendshipPagination
 
 
 class FriendshipViewSet(viewsets.GenericViewSet):
