@@ -1,18 +1,22 @@
 from django.contrib.auth.models import User
+from friendships.api.paginations import FriendshipPagination
 from friendships.api.serializers import (
     FollowerSerializer,
     FollowingSerializer,
     FriendshipSerializerForCreate,
 )
 from friendships.models import Friendship
+from friendships.services import FriendshipService
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from friendships.api.paginations import FriendshipPagination
 
 
 class FriendshipViewSet(viewsets.GenericViewSet):
+    # 我们希望 POST /api/friendship/1/follow 是去 follow user_id=1 的用户
+    # 因此这里 queryset 需要是 User.objects.all()
+    # 如果是 Friendship.objects.all 的话就会出现 404 Not Found
     # 因为 detail=True 的 actions 会默认先去调用 get_object() 也就是
     # queryset.filter(pk=1) 查询一下这个 object 在不在
     queryset = User.objects.all()
@@ -21,7 +25,6 @@ class FriendshipViewSet(viewsets.GenericViewSet):
 
     @action(methods=['GET'], detail=True, permission_classes=[AllowAny])
     def followers(self, request, pk):
-        # GET /api/friendships/user_id (aka. pk => primary key)/followers/
         friendships = Friendship.objects.filter(to_user_id=pk).order_by('-created_at')
         page = self.paginate_queryset(friendships)
         serializer = FollowerSerializer(page, many=True, context={'request': request})
@@ -53,6 +56,7 @@ class FriendshipViewSet(viewsets.GenericViewSet):
                 'errors': serializer.errors,
             }, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
+        FriendshipService.invalidate_following_cache(request.user.id)
         return Response({'success': True}, status=status.HTTP_201_CREATED)
 
     @action(methods=['POST'], detail=True, permission_classes=[IsAuthenticated])
@@ -70,14 +74,9 @@ class FriendshipViewSet(viewsets.GenericViewSet):
         # on_delete=models.CASCADE, 那么当 B 的某个数据被删除的时候，A 中的关联也会被删除。
         # 所以 CASCADE 是很危险的，我们一般最好不要用，而是用 on_delete=models.SET_NULL
         # 取而代之，这样至少可以避免误删除操作带来的多米诺效应。
-        # MySQL的使用中，三点1）不要用join （n^2),2不药品cascade级联删除避免数据库动荡
-        # 3）使用foreign key drop constrain bbbb
         deleted, _ = Friendship.objects.filter(
             from_user=request.user,
             to_user=pk,
         ).delete()
+        FriendshipService.invalidate_following_cache(request.user.id)
         return Response({'success': True, 'deleted': deleted})
-
-
-    def list(self, request):
-        return Response({'message': 'this is the friendships homepage'})
