@@ -9,6 +9,7 @@ from tweets.api.serializers import (
 )
 from tweets.models import Tweet
 from tweets.services import TweetService
+from utils.decorators import required_params
 from utils.paginations import EndlessPagination
 
 
@@ -36,28 +37,25 @@ class TweetViewSet(viewsets.GenericViewSet,
         )
         return Response(serializer.data)
 
+    @required_params(params=['user_id'])
     def list(self, request, *args, **kwargs):
-        """
-        重载 list 方法，不列出所有 tweets，必须要求指定 user_id 作为筛选条件
-        """
-        if 'user_id' not in request.query_params:
-            return Response('missing user_id', status=400)
-        # 这句查询会被翻译为
-        # select * from twitter_tweets
-        # where user_id = xxx
-        # order by created_at desc
-        # 这句 SQL 查询会用到 user 和 created_at 的联合索引
-        # 单纯的 user 索引是不够的
-        user_id = request.query_params.get('user_id')
-        tweets = TweetService.get_cached_tweets(user_id=request.query_params['user_id'])
-        tweets = self.paginate_queryset(tweets)
+        user_id = request.query_params['user_id']
+        cached_tweets = TweetService.get_cached_tweets(user_id)
+        page = self.paginator.paginate_cached_list(cached_tweets, request)
+        if page is None:
+            # 这句查询会被翻译为
+            # select * from twitter_tweets
+            # where user_id = xxx
+            # order by created_at desc
+            # 这句 SQL 查询会用到 user 和 created_at 的联合索引
+            # 单纯的 user 索引是不够的
+            queryset = Tweet.objects.filter(user_id=user_id).order_by('-created_at')
+            page = self.paginate_queryset(queryset)
         serializer = TweetSerializer(
-            tweets,
+            page,
             context={'request': request},
             many=True,
         )
-        # 一般来说 json 格式的 response 默认都要用 hash 的格式
-        # 而不能用 list 的格式（约定俗成）
         return self.get_paginated_response(serializer.data)
 
     def create(self, request, *args, **kwargs):
