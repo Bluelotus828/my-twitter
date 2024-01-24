@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+from kombu import Queue
 from pathlib import Path
+
 import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,14 +23,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'bzr+y$+i+8jzwd*$@&kcej6(g@v--17%*9b0fwhia-jb5wt286'
+SECRET_KEY = 'i_8$e&=cfr5bd1r(@^@gd@2y@+0@i0%ldpeke108o+pux&hsn4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', '192.168.33.10', 'localhost']
 
-INTERNAL_IPS = ['10.0.2.2']
 
 # Application definition
 
@@ -40,9 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # third parth framework
+    # third party
     'rest_framework',
-    'debug_toolbar',
     'django_filters',
     'notifications',
 
@@ -53,7 +53,6 @@ INSTALLED_APPS = [
     'newsfeeds',
     'comments',
     'likes',
-    'inbox',
 ]
 
 REST_FRAMEWORK = {
@@ -67,7 +66,6 @@ REST_FRAMEWORK = {
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -110,7 +108,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
@@ -148,6 +145,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
 # 设置存储用户上传文件的 storage 用什么系统
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 TESTING = ((" ".join(sys.argv)).find('manage.py test') != -1)
@@ -156,15 +154,15 @@ if TESTING:
 
 # 当用s3boto3 作为用户上传文件存储时，需要按照你在 AWS 上创建的配置来设置你的 BUCKET_NAME
 # 和 REGION_NAME，这个值你可以改成你自己创建的 bucket 的名字和所在的 region
-AWS_STORAGE_BUCKET_NAME = 'bwnw1django1project'
+AWS_STORAGE_BUCKET_NAME = 'django-twitter'
 AWS_S3_REGION_NAME = 'us-west-1'
 
 # 你还需要在 local_settings.py 中设置你的 AWS_ACCESS_KEY_ID 和 AWS_SECRET_ACCESS_KEY
 # 因为这是比较机密的信息，是不适合放在 settings.py 这种共享的配置文件中共享给所有开发者的
 # 真实的开发场景下，可以使用 local_settings.py 的方式，或者设置在环境变量里的方式
 # 这样这些机密信息就可以只被负责运维的核心开发人员掌控，而非所有开发者，降低泄露风险
-# AWS_ACCESS_KEY_ID = ''
-# AWS_SECRET_ACCESS_KEY = ''
+# AWS_ACCESS_KEY_ID = 'YOUR_ACCESS_KEY_ID'
+# AWS_SECRET_ACCESS_KEY = 'YOUR_SECRET_ACCESS_KEY'
 
 
 # media 的作用适用于存放被用户上传的文件信息
@@ -176,8 +174,8 @@ AWS_S3_REGION_NAME = 'us-west-1'
 MEDIA_ROOT = 'media/'
 
 # https://docs.djangoproject.com/en/3.1/topics/cache/
-# use 'sudo apt-get install memcached' to install t
-# use `pip install python-memcached`
+# memcached 安装方法: apt-get install memcached
+# 然后安装 python 的 memcached 客户端：use `pip install python-memcached`
 # DO NOT pip install memcache or django-memcached
 CACHES = {
     'default': {
@@ -208,7 +206,10 @@ REDIS_LIST_LENGTH_LIMIT = 1000 if not TESTING else 20
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/2' if not TESTING else 'redis://127.0.0.1:6379/0'
 CELERY_TIMEZONE = "UTC"
 CELERY_TASK_ALWAYS_EAGER = TESTING
-
+CELERY_QUEUES = (
+    Queue('default', routing_key='default'),
+    Queue('newsfeeds', routing_key='newsfeeds'),
+)
 
 try:
     from .local_settings import *
