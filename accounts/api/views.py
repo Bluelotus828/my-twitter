@@ -1,3 +1,4 @@
+from accounts.models import UserProfile
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
 from rest_framework import permissions
@@ -11,12 +12,19 @@ from accounts.api.serializers import (
     UserSerializerWithProfile,
 )
 from django.contrib.auth import (
-    logout as django_logout,
-    login as django_login,
     authenticate as django_authenticate,
+    login as django_login,
+    logout as django_logout,
 )
+from django.contrib.auth.models import User
+from django.utils.decorators import method_decorator
+from ratelimit.decorators import ratelimit
+from rest_framework import permissions
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
-from accounts.models import UserProfile
 from utils.permissions import IsObjectOwner
 
 
@@ -37,6 +45,7 @@ class AccountViewSet(viewsets.ViewSet):
     """
 
     @action(methods=['GET'], detail=False)
+    @method_decorator(ratelimit(key='ip', rate='3/s', method='POST', block=True))
     def login_status(self, request):
         data = {'has_logged_in': request.user.is_authenticated,
                 'ip address': request.META['REMOTE_ADDR'], }
@@ -51,6 +60,7 @@ class AccountViewSet(viewsets.ViewSet):
         return Response({'has_logged_out': True})
 
     @action(methods=['POST'], detail=False)
+    @method_decorator(ratelimit(key='ip', rate='3/s', method='POST', block=True))
     def login(self, request):
         # get username and password from request
         serializer = LoginSerializer(data=request.data)
@@ -120,6 +130,7 @@ class AccountViewSet(viewsets.ViewSet):
 
 
     @action(methods=['POST'], detail=False)
+    @method_decorator(ratelimit(key='ip', rate='3/s', method='POST', block=True))
     def logout(self, request):
         """
         登出当前用户
