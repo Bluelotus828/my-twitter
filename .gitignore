@@ -5,6 +5,12 @@ Vagrantfile
 .idea
 media/
 local_settings.py
+hbase-2.5.7/
+hbase-2.5.7-bin.tar.gz
+jdk-8u401-linux-x64.tar.gz
+thrift-0.19.0.tar.gz
+thrift-0.19.0/
+.DS_Store
 
 
 
