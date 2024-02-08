@@ -15,8 +15,10 @@ class CommentModelTests(TestCase):
     def test_like_set(self):
         self.create_like(self.linghu, self.comment)
         self.assertEqual(self.comment.like_set.count(), 1)
+
         self.create_like(self.linghu, self.comment)
         self.assertEqual(self.comment.like_set.count(), 1)
+
         dongxie = self.create_user('dongxie')
         self.create_like(dongxie, self.comment)
         self.assertEqual(self.comment.like_set.count(), 2)
