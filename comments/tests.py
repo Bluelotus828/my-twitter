@@ -1,26 +1,22 @@
 from testing.testcases import TestCase
-from datetime import timedelta
-from utils.time_helpers import utc_now
 
 
-class TweetTests(TestCase):
+class CommentModelTests(TestCase):
+
     def setUp(self):
-        self.clear_cache()
+        super(CommentModelTests, self).setUp()
         self.linghu = self.create_user('linghu')
-        self.tweet = self.create_tweet(self.linghu, content='Jiuzhang Dafa Hao')
+        self.tweet = self.create_tweet(self.linghu)
+        self.comment = self.create_comment(self.linghu, self.tweet)
 
-    def test_hours_to_now(self):
-        self.tweet.created_at = utc_now() - timedelta(hours=10)
-        self.tweet.save()
-        self.assertEqual(self.tweet.hours_to_now, 10)
+    def test_comment(self):
+        self.assertNotEqual(self.comment.__str__(), None)
 
     def test_like_set(self):
-        self.create_like(self.linghu, self.tweet)
-        self.assertEqual(self.tweet.like_set.count(), 1)
-
-        self.create_like(self.linghu, self.tweet)
-        self.assertEqual(self.tweet.like_set.count(), 1)
-
+        self.create_like(self.linghu, self.comment)
+        self.assertEqual(self.comment.like_set.count(), 1)
+        self.create_like(self.linghu, self.comment)
+        self.assertEqual(self.comment.like_set.count(), 1)
         dongxie = self.create_user('dongxie')
-        self.create_like(dongxie, self.tweet)
-        self.assertEqual(self.tweet.like_set.count(), 2)
+        self.create_like(dongxie, self.comment)
+        self.assertEqual(self.comment.like_set.count(), 2)
